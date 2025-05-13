@@ -1,6 +1,11 @@
 <!doctype html>
 <?php
+    $type=1;
     require('check_log.php');
+    function validateDate($date, $format = 'Y-m-d'){
+        $d = DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) == $date;
+    }
     if(isset($_GET["t"])&&isset($_SESSION["doctor"])){
         require 'connect.php';
         $time=htmlspecialchars(trim($_GET['t']));
@@ -32,11 +37,14 @@
         //verify service
         if(!$_SESSION["ref"])$query=$polaczenie->prepare("SELECT service_id FROM service where service_id=:ser AND available=true AND referral=FALSE"); 
         else $query=$polaczenie->prepare("SELECT refferal_id FROM  refferal where refferal_id={$_SESSION["ref"]} AND service_id=:ser");
-        echo"SELECT refferal_id FROM  refferal where refferal_id={$_SESSION["ref"]} AND service_id=$service";
+        //echo"SELECT refferal_id FROM  refferal where refferal_id={$_SESSION["ref"]} AND service_id=$service";
         $query->bindValue(':ser',$service,PDO::PARAM_INT);
         $query->execute();
         $result=$query->fetchall();
-        if($date<=date('Y-m-d')|| !$service|| !$result || $date>date('Y-m-d',mktime(0,0,0,date("m"),date("d")+14,date("Y")))) header("Location: {$_SERVER['PHP_SELF']}");
+        if(!ValidateDate($date) || $date<=date('Y-m-d')|| !$service|| !$result || $date>date('Y-m-d',mktime(0,0,0,date("m"),date("d")+14,date("Y")))){
+            header("Location: {$_SERVER['PHP_SELF']}");
+            exit();
+        }
 
         $_SESSION["service"]=$service;
         $_SESSION["date"]=$date;
@@ -63,7 +71,7 @@
     <![endif]-->
 </head>
 <body>
-<?php include "menu.html" ?>
+<?php include "menu.php" ?>
 
 <div id="container">
         <header>
@@ -72,7 +80,8 @@
         </header>
         <main>
             <article>
-                <?php if(!isset($_POST["service"])&&!isset($_POST["doctor"])&&!isset($_POST["date"])){ ?>
+                <?php if(!isset($_POST["service"])&&!isset($_POST["doctor"])&&!isset($_POST["date"])){ 
+                    //FIRST section/step?>
                     <form method="post" action="<?=$_SERVER['PHP_SELF']?>">
                     <label>Date</label>
                     <input type="date" name="date" required max="<?= date('Y-m-d',mktime(0,0,0,date("m"),date("d")+14,date("Y")))?>" min="<?= date('Y-m-d',mktime(0,0,0,date("m"),date("d")+1,date("Y")))?>">
@@ -108,7 +117,8 @@
                     </form>
                     <br>
                     <?= !isset($_GET["r"])? "<div><a href=\"refferals.php\">Have a refferal?</a></div>": ""?>
-                <?php ;}if(isset($_POST["service"])){ ?>
+                <?php ;}if(isset($_POST["service"])){ 
+                    //SECOND section?>
                     <form method="post" action="<?=$_SERVER['PHP_SELF']?>">
                     <label>Doctor</label>
                     <select name="doctor">
@@ -123,6 +133,7 @@
                     <input type="submit" value="Continue!">
                     </form>
                 <?php ;}if(isset($_POST["doctor"])||(isset($_SESSION["doctor"])&&isset($_POST["date"]))){ 
+                    //Third step - Timeslot choice
                         require "connect.php";
                     if(isset($_POST["doctor"])){
                         $doctor=htmlspecialchars(trim($_POST["doctor"]));
@@ -139,7 +150,10 @@
                     $query->bindValue(':doc',$doctor,PDO::PARAM_INT);
                     $query->execute();
                     $result=$query->fetchall();
-                    if($date<=date('Y-m-d')||!$result)header("Location: {$_SERVER['PHP_SELF']}");
+                    if($date<=date('Y-m-d')||!$result){
+                        header("Location: {$_SERVER['PHP_SELF']}");
+                        exit();
+                    }
 
                     $_SESSION['doctor']=$doctor;
                     $_SESSION['date']=$date;

@@ -1,5 +1,6 @@
 <!doctype html>
 <?php
+    $type=1;
     require('check_log.php');
 ?>
 <head>
@@ -16,7 +17,7 @@
     <![endif]-->
 </head>
 <body>
-<?php include "menu.html" ?>
+<?php include "menu.php" ?>
 
 <div id="container">
         <header>
@@ -28,13 +29,13 @@
                     require('connect.php');
                     
                     $query=$polaczenie->query("SELECT worker.name as wname,surname,doctor.specialisation,service.name as sname,date,content FROM prescription join appointment using(app_id) join doctor using(doc_id)
-                    join worker using(worker_id) join service using(service_id) where patient_id=".$_SESSION["log_id"]);
+                    join worker using(worker_id) join service using(service_id) where patient_id=\"{$_SESSION["log_id"]}\" order by date desc");
                     if($query){
                         $result=$query->fetchAll();
                         foreach($result as $res){
                             $output="<div class=\"appo\"><div class=flexbox><p>$res[date]</p><p>{$res["specialisation"]}</p><p>{$res["sname"]}</p></div>
-                            <div><p>Doctor {$res["wname"]} {$res["surname"]}</p></div>";
-                            $output.="{$res["content"]}";
+                            <p>Doctor {$res["wname"]} {$res["surname"]}</p>";
+                            $output.="<div><p>{$res["content"]}</p></div>";
                             $output.="</div>";
                             echo $output;
                         }

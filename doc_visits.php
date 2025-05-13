@@ -1,6 +1,6 @@
 <!doctype html>
 <?php
-    $type=1;
+    $type=2;
     require('check_log.php');
     require('connect.php');
     if(isset($_GET["r"])){
@@ -35,51 +35,49 @@
             <h1>Your appointments</h1>
         </header>
         <main>
-            
-            
             <article>
                 <?= isset($error) ? $error:''?>
-                <h1>Upcoming appointment</h1>
+                <h1>Today appointment</h1>
                 <?php
                     
-                    $query=$polaczenie->query("SELECT appointment.app_id as app_id,worker.name as wname,surname,doctor.specialisation,service.name as sname,appointment.time,date,room_number FROM appointment join doctor using(doc_id)
-                    join worker using(worker_id) join service using(service_id) left join room using(room_id) where patient_id=".$_SESSION["log_id"].
-                    " AND date>'".date("Y-m-d")."'");
-                    if($query){
-                        $result=$query->fetchAll();
-                        foreach($result as $res){
-                            $output="<div class=\"appo\"><div class=flexbox><p>$res[date]</p><p>". substr($res["time"],0,8)."</p><p>{$res["sname"]}</p></div>
-                            <div class=flexbox><p>Doctor {$res["wname"]} {$res["surname"]}</p><p>{$res["specialisation"]}</p></div>";
-                            if($res["room_number"])$output.="<p>room number: {$res["room_number"]}</p>";
-                            $output.="<a class=\"mini\" href=\"{$_SERVER["PHP_SELF"]}?r={$res["app_id"]}\" onclick=\"return confirm('Are you sure?')\">Cancel</a>";
-                            $output.="</div>";
-                            echo $output;
-                        }
-                    }
-                    echo"<h1>Today appointments</h1>";
-                    $query=$polaczenie->query("SELECT appointment.app_id as app_id,worker.name as wname,surname,doctor.specialisation,service.name as sname,appointment.time,date,room_number FROM appointment join doctor using(doc_id)
-                    join worker using(worker_id) join service using(service_id) left join room using(room_id) where patient_id=".$_SESSION["log_id"].
+                    $query=$polaczenie->query("SELECT appointment.app_id as app_id,appointment.patient_id,patient.name as wname,surname,service.name as sname,appointment.time,date,room_number FROM appointment join patient using(patient_id)
+                     join service using(service_id) left join room using(room_id) where doc_id=".$_SESSION["doc_id"].
                     " AND date='".date("Y-m-d")."'");
                     if($query){
                         $result=$query->fetchAll();
                         foreach($result as $res){
                             $output="<div class=\"appo\"><div class=flexbox><p>$res[date]</p><p>". substr($res["time"],0,8)."</p><p>{$res["sname"]}</p></div>
-                            <div class=flexbox><p>Doctor {$res["wname"]} {$res["surname"]}</p><p>{$res["specialisation"]}</p></div>";
+                            <div><a class=\"mini\" href=\"patient_view.php?t={$res["patient_id"]}\">{$res["wname"]} {$res["surname"]}</a></div>";
+                            if($res["room_number"])$output.="<p>room number: {$res["room_number"]}</p>";
+                            $output.="<a class=\"mini\" href=\"visit_addD.php?t={$res["app_id"]}\">See visit</a>";
+                            $output.="</div>";
+                            echo $output;
+                        }
+                    }
+                    echo"<h1>Future appointments</h1>";
+                    $query=$polaczenie->query("SELECT appointment.app_id as app_id,appointment.patient_id,patient.name as wname,surname,service.name as sname,appointment.time,date,room_number FROM appointment join patient using(patient_id)
+                     join service using(service_id) left join room using(room_id) where doc_id=".$_SESSION["doc_id"].
+                    " AND date>'".date("Y-m-d")."'");
+                    if($query){
+                        $result=$query->fetchAll();
+                        foreach($result as $res){
+                            $output="<div class=\"appo\"><div class=flexbox><p>$res[date]</p><p>". substr($res["time"],0,8)."</p><p>{$res["sname"]}</p></div>
+                            <div><a class=\"mini\" href=\"patient_view.php?t={$res["patient_id"]}\">{$res["wname"]} {$res["surname"]}</a></div>";
                             if($res["room_number"])$output.="<p>room number: {$res["room_number"]}</p>";
                             $output.="</div>";
                             echo $output;
                         }
                     }
                     echo "<h1>Past appointments</h1>";
-                    $query=$polaczenie->query("SELECT worker.name as wname,surname,doctor.specialisation,service.name as sname,appointment.time,date,recommendations FROM appointment join doctor using(doc_id)
-                    join worker using(worker_id) join service using(service_id) where patient_id=".$_SESSION["log_id"].
-                    " AND date<\"".date("Y-m-d")."\" order by date desc");
+                    $query=$polaczenie->query("SELECT appointment.app_id as app_id,appointment.patient_id,patient.name as wname,surname,service.name as sname,appointment.time,date,room_number FROM appointment join patient using(patient_id)
+                     join service using(service_id) left join room using(room_id) where doc_id=".$_SESSION["doc_id"].
+                    " AND date<'".date("Y-m-d")."' order by date desc");
                     if($query){
                         $result=$query->fetchAll();
                         foreach($result as $res){
                             $output="<div class=\"appo\"><div class=flexbox><p>$res[date]</p><p>". substr($res["time"],0,8)."</p><p>{$res["sname"]}</p></div>
-                            <div class=flexbox><p>Doctor {$res["wname"]} {$res["surname"]}</p><p>{$res["specialisation"]}</p></div>";
-                            if($res["recommendations"])$output.="<div><p>{$res["recommendations"]}</p></div>";
+                            <p>{$res["wname"]} {$res["surname"]}</p>";
+                            $output.="<a class=\"mini\" href=\"visit_addD.php?t={$res["app_id"]}\">See visit</a>";
                             $output.="</div>";
                             echo $output;
                         }
